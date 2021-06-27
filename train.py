@@ -3,19 +3,23 @@ from tensorflow.keras.mixed_precision import experimental as mixed_precision
 from callbacks import Scalar_LR
 from metrics import CreateMetrics
 from config import *
-from utils.load_datasets import GenerateDatasets
+from utils.data_generator import DataGenerator
 from model.model_builder import model_build
 from model.loss import Total_loss
 import argparse
 import time
 import os
 
+config = GetConfig()
+params = config.get_hyperParams()
+
+
 tf.keras.backend.clear_session()
 policy = mixed_precision.Policy('mixed_float16', loss_scale=1024)
 mixed_precision.set_policy(policy)
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--batch_size",     type=int,   help="배치 사이즈값 설정", default=128)
+
 parser.add_argument("--epoch",          type=int,   help="에폭 설정", default=300)
 parser.add_argument("--lr",             type=float, help="Learning rate 설정", default=0.001)
 parser.add_argument("--weight_decay",   type=float, help="Weight Decay 설정", default=0.0005)
@@ -30,17 +34,14 @@ parser.add_argument("--use_weightDecay",  type=bool,  help="weightDecay 사용 �
 
 args = parser.parse_args()
 WEIGHT_DECAY = args.weight_decay
-BATCH_SIZE = args.batch_size
+
 EPOCHS = args.epoch
 base_lr = args.lr
 SAVE_MODEL_NAME = args.model_name
 DATASET_DIR = args.dataset_dir
 CHECKPOINT_DIR = args.checkpoint_dir
 TENSORBOARD_DIR = args.tensorboard_dir
-MODEL_NAME = args.backbone_model
-TRAIN_MODE = args.train_dataset
 IMAGE_SIZE = INPUT_SIZE
-USE_WEIGHT_DECAY = args.use_weightDecay
 
 os.makedirs(DATASET_DIR, exist_ok=True)
 os.makedirs(CHECKPOINT_DIR, exist_ok=True)
@@ -51,22 +52,26 @@ priors = create_priors_boxes(specs, IMAGE_SIZE[0])
 TARGET_TRANSFORM = MatchingPriors(priors, center_variance, size_variance, iou_threshold)
 
 # Create Dataset
-dataset_config = GenerateDatasets(TRAIN_MODE, DATASET_DIR, IMAGE_SIZE, BATCH_SIZE, TARGET_TRANSFORM)
+train_generator = DataGenerator(config.get_dir_path(), IMAGE_SIZE[0], batch_size=params['batch_size'], shuffle=True, mode='train')
+valid_generator = DataGenerator(config.get_dir_path(), IMAGE_SIZE[0], batch_size=params['batch_size'], shuffle=False, mode='test')
 
 # Set loss function
-loss = Total_loss(dataset_config.num_classes)
+loss = Total_loss(train_generator.num_classes)
 
-print("백본 EfficientNet{0} .".format(MODEL_NAME))
 
-steps_per_epoch = dataset_config.number_train // BATCH_SIZE
-validation_steps = dataset_config.number_test // BATCH_SIZE
-print("학습 배치 개수:", steps_per_epoch)
-print("검증 배치 개수:", validation_steps)
+train_len, y_len = train_generator.get_data_len()
+print("data chekc : ", train_len, y_len)
+valid_len, _ = valid_generator.get_data_len()
+train_steps_per_epoch = train_len // params['batch_size']
+valid_steps_per_epoch = valid_len // params['batch_size']
 
-metrics = CreateMetrics(dataset_config.num_classes)
+print("학습 배치 개수:", train_steps_per_epoch)
+print("검증 배치 개수:", valid_steps_per_epoch)
+
+metrics = CreateMetrics(train_generator.num_classes)
 reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.9, patience=3, min_lr=1e-5, verbose=1)
 
-checkpoint = ModelCheckpoint(CHECKPOINT_DIR + TRAIN_MODE + '_' + SAVE_MODEL_NAME + '.h5',
+checkpoint = ModelCheckpoint(CHECKPOINT_DIR + 'ear' + '_' + SAVE_MODEL_NAME + '.h5',
                                  monitor='val_loss', save_best_only=True, save_weights_only=True, verbose=1)
 testCallBack = Scalar_LR('test', TENSORBOARD_DIR)
 tensorboard = tf.keras.callbacks.TensorBoard(log_dir=TENSORBOARD_DIR, write_graph=True, write_images=True)
@@ -87,22 +92,25 @@ mirrored_strategy = tf.distribute.MirroredStrategy(cross_device_ops=tf.distribut
 print("Number of devices: {}".format(mirrored_strategy.num_replicas_in_sync))
 
 with mirrored_strategy.scope(): # if use single gpu > with tf.device('/device:GPU:0'):
-    model = model_build(TRAIN_MODE, train=True, image_size=IMAGE_SIZE)
+    model = model_build(image_size=IMAGE_SIZE)
 
     model.compile(
         optimizer=optimizer,
-        loss=loss.total_loss,
-        metrics=[metrics.precision, metrics.recall, metrics.cross_entropy, metrics.localization]
+        loss='mean_squared_error',
+        metrics=['accuracy']
     )
 
     model.summary()
 
-    history = model.fit(dataset_config.training_dataset,
-            validation_data=dataset_config.validation_dataset,
-            steps_per_epoch=steps_per_epoch,
-            validation_steps=validation_steps,
-            epochs=EPOCHS,
-            callbacks=callback)
+    model.fit(train_generator,
+              validation_data=valid_generator,
+              validation_steps=valid_steps_per_epoch,
+              validation_batch_size=params['batch_size'],
+              steps_per_epoch=train_steps_per_epoch,
+              epochs=params['epoch'],
+              callbacks=callback,
+              batch_size=params['batch_size']
+              )
 
     model.save('./checkpoints/save_model.h5', True, True, 'h5')
 

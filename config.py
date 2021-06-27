@@ -1,41 +1,17 @@
 from utils.priors import *
+import os
+import time
 
-INPUT_SIZE = [300, 300]
-iou_threshold = 0.5 # 0.5
-center_variance = 0.1 # 0.1
-size_variance = 0.2 # 0.2
+INPUT_SIZE = [224, 224]
+iou_threshold = 0.5
+center_variance = 0.1
+size_variance = 0.2
 
-# tensorflowjs_converter --input_format=keras ./checkpoints/save_model.h5 ./checkpoints/tfjs_model
-
-# http://127.168.0.1:3000/predict-with-tfjs.html
-
-"""
-tensorflowjs_converter --input_format=tf_frozen_model --output_node_names='tf_op_layer_GatherV2_5' ./checkpoints/graph_model/saved_model.pb ./checkpoints/tfjs_frozen
-tensorflowjs_converter --input_format=tf_frozen_model --output_node_names='Identity' --quantize_float16 ./checkpoints/new_tfjs_frozen/frozen_graph.pb ./checkpoints/test_frozen
-tensorflowjs_converter --input_format=tf_frozen_model --output_node_names='Identity' ./checkpoints/new_tfjs_frozen/frozen_graph.pb ./checkpoints/test_frozen
-"""
-
-class TrainHyperParams:
-    def __init__(self):
-        self.optimizer_name = 'sgd'
-        self.weight_decay = 0.0005
-        self.learning_rate = 0.001
-        self.momentum = 0.9
-        self.lr_decay_steps = 200
-        self.epochs = 200
-
-    def setOptimizers(self):
-        try:
-            if self.optimizer_name == 'sgd':
-                return tf.keras.optimizers.SGD(learning_rate=self.learning_rate, momentum=self.momentum)
-
-            elif self.optimizer_name == 'adam':
-                return tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
-
-            elif self.optimizer_name == 'rmsprop':
-                return tf.keras.optimizers.RMSprop(learning_rate=self.learning_rate)
-        except:
-            print("check optimizers name")
+hyper_params = {
+                "epoch": 1,
+                "lr": 0.0001,
+                "batch_size": 1
+                }
 
 def set_priorBox():
     return [
@@ -46,4 +22,57 @@ def set_priorBox():
         Spec(3, 100, BoxSizes(182, 226), [2]),
         Spec(1, 300, BoxSizes(264, 315), [2])
     ]
+
+class GetConfig:
+    def __init__(self,
+                 data_dir='datasets/',
+                 result_dir='checkpoints/'):
+
+        # set dir
+        self.data_dir = data_dir
+        self.result_dir = result_dir
+        self.time = self.get_current_time()
+        self.train_dir = os.path.join(data_dir + 'train/')
+        self.valid_dir = os.path.join(data_dir + 'test/')
+        self.test_dir = os.path.join(data_dir + 'test/')
+        self.result_dir = result_dir + self.time
+        self.tensorboard_dir = result_dir + self.time + '/tensorboard'
+
+        # save file dir
+        self.save_weight = os.path.join(self.result_dir + '/save_weights/')
+        self.save_backup = os.path.join(self.result_dir + '/back_weights/')
+        self.test_result = os.path.join(self.result_dir + '/test/')
+
+        # create dir
+        self.create_directory()
+
+        # train params
+        self.args = hyper_params
+
+
+
+    def create_directory(self):
+        os.makedirs(self.data_dir, exist_ok=True)
+        os.makedirs(self.result_dir, exist_ok=True)
+        os.makedirs(self.result_dir + self.time, exist_ok=True)
+
+        os.makedirs(self.save_weight, exist_ok=True)
+        os.makedirs(self.save_backup, exist_ok=True)
+        os.makedirs(self.test_result, exist_ok=True)
+
+    def get_current_time(self):
+        return str(time.strftime('%m%d', time.localtime(time.time())))
+
+    def get_dir_path(self):
+        return {
+            "train": self.train_dir,
+            "validation": self.valid_dir,
+            "test": self.test_dir,
+            "result": self.result_dir,
+            "tensorboard": self.tensorboard_dir
+        }
+
+    def get_hyperParams(self):
+        return self.args
+
 
