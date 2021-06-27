@@ -39,6 +39,8 @@ class GetConfig:
     def create_directory(self):
         os.makedirs(self.data_dir, exist_ok=True)
         os.makedirs(self.result_dir, exist_ok=True)
+        os.makedirs(self.save_weight, exist_ok=True)
+        os.makedirs(self.test_result, exist_ok=True)
 
     def get_current_time(self):
         return str(time.strftime('%m%d', time.localtime(time.time())))
