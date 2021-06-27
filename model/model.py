@@ -21,7 +21,7 @@ def csnet_extra_model(IMAGE_SIZE=224):
     # x8 = Dense(128, activation='relu')(feature)
     # x8 = Dropout(0.2)(x8)
     # final = Dense(4)(x8)
-    base_channel = 8
+    base_channel = 16
     input = Input(shape=(IMAGE_SIZE, IMAGE_SIZE, 3))
     conv0 = Conv2D(base_channel, (3, 3), kernel_initializer='random_uniform', activation='relu')(input)
 
@@ -52,6 +52,6 @@ def csnet_extra_model(IMAGE_SIZE=224):
     norm4 = BatchNormalization()(dense1)
     drop3 = Dropout(0.7)(norm4)
 
-    dense2 = Dense(4, activation='sigmoid')(drop3)
+    dense2 = Dense(110, activation='sigmoid')(drop3)
 
     return input, dense2
