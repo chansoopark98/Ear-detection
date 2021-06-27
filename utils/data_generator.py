@@ -6,6 +6,25 @@ import cv2
 import os
 import numpy as np
 
+def draw_bounding(img , bboxes, img_size):
+    # resizing 작업
+    x1 = int(bboxes[0] * img_size[1])
+    x2 = int(bboxes[1] * img_size[0])
+    y1 = int(bboxes[2] * img_size[1])
+    y2 = int(bboxes[3] * img_size[0])
+
+    img_box = np.copy(img)
+
+    cv2.circle(img_box, (x1, x2), 15, (255, 0, 0), cv2.FILLED, cv2.LINE_4)
+    cv2.circle(img_box, (y1, y2), 15, (0, 255, 0), cv2.FILLED, cv2.LINE_4)
+    alpha = 0.8
+    cv2.addWeighted(img_box, alpha, img, 1. - alpha, 0, img)
+
+    cv2.imshow('test', img_box)
+
+
+    cv2.waitKey()
+
 class DataGenerator(Sequence):
     def __init__(self,
                  path_args,
@@ -60,35 +79,50 @@ class DataGenerator(Sequence):
                 str3 = float(str3)
                 str4 = float(str4)
 
+
+
                 if str1 < str3: # 첫번째 x가 더 클경우 x축 좌측
-                    tmp_l_x = str1 / 2
-                    tmp_r_x = str3 + ((width - str3) / 2)
+                    tmp_l_x = int(str1 / 2)
+                    tmp_r_x = int(str3 + ((width - str3) / 2))
+
+
                 if str3 < str1:
-                    tmp_l_x = str3 / 2
-                    tmp_r_x = str1 + ((width - str1) / 2)
+                    tmp_l_x = int(str3 / 2)
+                    tmp_r_x = int(str1 + ((width - str1) / 2))
 
                 if str2 < str4: # 첫번째 x가 더 클경우 x축 좌측
-                    tmp_l_y = str2 / 2
-                    tmp_r_y = str4 + ((height - str4) / 2)
+                    tmp_l_y = int(str2 / 2)
+                    tmp_r_y = int(str4 + ((height - str4) / 2))
+                    tmp_r_y_resize = int((height - str4) / 2)
                 if str3 < str1:
-                    tmp_l_y = str4 / 2
-                    tmp_r_y = str2 + ((width - str2) / 2)
+                    tmp_l_y = int(str4 / 2)
+                    tmp_r_y = int(str2 + ((width - str2) / 2))
+                    tmp_r_y_resize = int((width - str2) / 2)
+
+                x1 = (str1 - tmp_l_x) + tmp_r_x
+                x2 = (str3 - tmp_l_x) + tmp_r_x
+
+                y1 = (str1 - tmp_l_y) + tmp_r_y
+                y2 = (str3 - tmp_l_y) + tmp_r_y
+
+
 
 
                 # crop_img = x[tmp_l_x:tmp_r_x, tmp_l_y:tmp_r_y]
                 crop_img = x[tmp_l_y:tmp_r_y, tmp_l_x:tmp_r_x]
+                shapes = crop_img.shape
+                height=shapes[0]
+                width=shapes[1]
 
+                point = [float(x1) / width, float(y1) / height, float(x2) / width, float(y2) / height]
 
-
-
-
-
-
-
-                point = tf.stack([float(str1)/width, float(str2)/height, float(str3)/width, float(str4)/height], axis=0)
-
+                # point = tf.stack([float(str1)/width, float(str2)/height, float(str3)/width, float(str4)/height], axis=0)
+                draw_bounding(crop_img, point, img_size=shapes)
 
                 point = tf.cast(point, dtype=tf.float32)
+
+
+
 
                 self.y_list.append(point)
 
