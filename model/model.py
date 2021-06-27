@@ -18,7 +18,7 @@ def csnet_extra_model(IMAGE_SIZE=224):
     feature = base.get_layer('predictions').output
 
     x8 = Dense(128, activation='relu')(feature)
-    x8 = Dropout(0.2)(x8)
+    x8 = Dropout(0.7)(x8)
     final = Dense(4)(x8)
 
     return base.input, final
