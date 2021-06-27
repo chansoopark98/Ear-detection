@@ -6,6 +6,24 @@ import cv2
 import os
 import numpy as np
 
+
+def draw_bounding(img , bboxes, img_size):
+    # resizing 작업
+
+        x1 = int(bboxes[0] * img_size[1])
+        x2 = int(bboxes[1] * img_size[0])
+        y1 = int(bboxes[2] * img_size[1])
+        y2 = int(bboxes[3] * img_size[0])
+
+        img_box = np.copy(img)
+
+        cv2.circle(img_box, (x1, x2), 15, (255, 0, 0), cv2.FILLED, cv2.LINE_4)
+        cv2.circle(img_box, (y1, y2), 15, (0, 255, 0), cv2.FILLED, cv2.LINE_4)
+        alpha = 0.8
+        cv2.addWeighted(img_box, alpha, img, 1. - alpha, 0, img)
+        cv2.imshow('test', img_box)
+        cv2.waitKey()
+
 class DataGenerator(Sequence):
     def __init__(self,
                  path_args,
@@ -60,35 +78,11 @@ class DataGenerator(Sequence):
                 str3 = float(str3)
                 str4 = float(str4)
 
-                if str1 < str3: # 첫번째 x가 더 클경우 x축 좌측
-                    tmp_l_x = str1 / 2
-                    tmp_r_x = str3 + ((width - str3) / 2)
-                if str3 < str1:
-                    tmp_l_x = str3 / 2
-                    tmp_r_x = str1 + ((width - str1) / 2)
+                point = tf.stack([str1/width, str2/height, str3/width, str4/height], axis=0)
 
-                if str2 < str4: # 첫번째 x가 더 클경우 x축 좌측
-                    tmp_l_y = str2 / 2
-                    tmp_r_y = str4 + ((height - str4) / 2)
-                if str3 < str1:
-                    tmp_l_y = str4 / 2
-                    tmp_r_y = str2 + ((width - str2) / 2)
+                # point = tf.cast(point, dtype=tf.float32)
 
-
-                # crop_img = x[tmp_l_x:tmp_r_x, tmp_l_y:tmp_r_y]
-                crop_img = x[tmp_l_y:tmp_r_y, tmp_l_x:tmp_r_x]
-
-
-
-
-
-
-
-
-                point = tf.stack([float(str1)/width, float(str2)/height, float(str3)/width, float(str4)/height], axis=0)
-
-
-                point = tf.cast(point, dtype=tf.float32)
+                # draw_bounding(x, point, [224, 224])
 
                 self.y_list.append(point)
 
@@ -129,18 +123,18 @@ class DataGenerator(Sequence):
             image = self.x_list[j]
             point = self.y_list[j]
 
-            if tf.random.uniform([]) > 0.5:
+            if tf.random.uniform([]) > 0.1:
                 image = tf.image.random_saturation(image, lower=0.5, upper=1.5)  # 랜덤 채도
-            if tf.random.uniform([]) > 0.5:
+            if tf.random.uniform([]) > 0.1:
                 image = tf.image.random_brightness(image, max_delta=0.15)  # 랜덤 밝기
-            if tf.random.uniform([]) > 0.5:
+            if tf.random.uniform([]) > 0.1:
                 image = tf.image.random_contrast(image, lower=0.5, upper=1.5)  # 랜덤 대비
-            if tf.random.uniform([]) > 0.5:
+            if tf.random.uniform([]) > 0.1:
                 image = tf.image.random_hue(image, max_delta=0.2)  # 랜덤 휴 트랜스폼
-            if tf.random.uniform([]) > 0.5: # flip
-                image = tf.image.flip_left_right(image)
-                point = tf.stack([1 - point[0], 1 - point[1],
-                                  1 - point[2], 1 - point[3],], axis=0)
+            # if tf.random.uniform([]) > 0.5: # flip
+            #     image = tf.image.flip_left_right(image)
+            #     point = tf.stack([1 - point[0], 1 - point[1],
+            #                       1 - point[2], 1 - point[3],], axis=0)
 
             data.append(image)
             y_data.append(point)

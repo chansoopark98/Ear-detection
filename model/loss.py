@@ -1,8 +1,7 @@
 import tensorflow as tf
 
-
 def total_loss(y_true, y_pred):
-    return tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)(y_true,y_pred)
+    return tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.AUTO)(y_true,y_pred)
 
 
 def smooth_l1(labels, scores, sigma=1.0):

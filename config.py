@@ -6,7 +6,7 @@ hyper_params = {
                 "epoch": 300,
                 "lr": 0.0001,
                 "end_lr": 0.00001,
-                "batch_size": 64,
+                "batch_size": 32,
                 "image_size": 224,
                 }
 
