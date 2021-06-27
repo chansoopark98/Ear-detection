@@ -47,7 +47,8 @@ polyDecay = tf.keras.optimizers.schedules.PolynomialDecay(initial_learning_rate=
                                                           end_learning_rate=params['end_lr'], power=0.5)
 lr_scheduler = tf.keras.callbacks.LearningRateScheduler(polyDecay)
 
-optimizer = tf.keras.optimizers.Adam(learning_rate=params['lr'])
+# optimizer = tf.keras.optimizers.Adam(learning_rate=params['lr'])
+optimizer = tf.keras.optimizers.SGD(learning_rate=params['lr'], momentum=0.9)
 optimizer = mixed_precision.LossScaleOptimizer(optimizer, loss_scale='dynamic')  # tf2.4.1 이전
 
 callback = [checkpoint, lr_scheduler, tensorboard]
@@ -55,15 +56,15 @@ callback = [checkpoint, lr_scheduler, tensorboard]
 
 mirrored_strategy = tf.distribute.MirroredStrategy(cross_device_ops=tf.distribute.HierarchicalCopyAllReduce())
 print("Number of devices: {}".format(mirrored_strategy.num_replicas_in_sync))
-
+from model.loss import total_loss, smooth_l1
 # with mirrored_strategy.scope(): # if use single gpu > with tf.device('/device:GPU:0'):
 with tf.device('/device:GPU:0'):
     model = model_build(image_size=params['image_size'])
 
     model.compile(
         optimizer=optimizer,
-        loss='mean_squared_error',
-        metrics=['accuracy']
+        loss=total_loss,
+        metrics=[smooth_l1, 'accuracy']
     )
 
     model.summary()

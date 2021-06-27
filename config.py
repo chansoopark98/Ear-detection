@@ -3,11 +3,11 @@ import time
 
 
 hyper_params = {
-                "epoch": 200,
-                "lr": 0.001,
+                "epoch": 300,
+                "lr": 0.0005,
                 "end_lr": 0.00005,
                 "batch_size": 64,
-                "image_size": 224
+                "image_size": 224,
                 }
 
 

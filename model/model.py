@@ -5,7 +5,8 @@ MOMENTUM = 0.999
 EPSILON = 1e-3
 
 def build_backbone(IMAGE_SIZE=224):
-    weights = "imagenet"
+    # weights = "imagenet"
+    weights = None
     base = mobilenet_v2.MobileNetV2(weights=weights, include_top=True, input_shape=(IMAGE_SIZE, IMAGE_SIZE, 3))
     # base = ResNet50V2(include_top=True, weights=weights, input_shape=(IMAGE_SIZE, IMAGE_SIZE, 3))
     base.summary()
