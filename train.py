@@ -47,7 +47,7 @@ polyDecay = tf.keras.optimizers.schedules.PolynomialDecay(initial_learning_rate=
                                                           end_learning_rate=params['end_lr'], power=0.5)
 lr_scheduler = tf.keras.callbacks.LearningRateScheduler(polyDecay)
 
-optimizer = tf.keras.optimizers.SGD(learning_rate=params['lr'], momentum=0.9)
+optimizer = tf.keras.optimizers.Adam(learning_rate=params['lr'])
 optimizer = mixed_precision.LossScaleOptimizer(optimizer, loss_scale='dynamic')  # tf2.4.1 이전
 
 callback = [checkpoint, lr_scheduler, tensorboard]

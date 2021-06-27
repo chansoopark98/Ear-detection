@@ -42,8 +42,8 @@ class DataGenerator(Sequence):
             x = image.img_to_array(img)
             height = x.shape[0]
             width = x.shape[1]
-            x = tf.image.resize(x, [self.img_size, self.img_size])
             x = preprocess_input(x)
+            x = tf.image.resize(x, [self.img_size, self.img_size])
 
 
             self.x_list.append(x)

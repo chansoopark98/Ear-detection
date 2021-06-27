@@ -5,7 +5,7 @@ import time
 hyper_params = {
                 "epoch": 200,
                 "lr": 0.001,
-                "end_lr": 0.0001,
+                "end_lr": 0.00005,
                 "batch_size": 64,
                 "image_size": 224
                 }
