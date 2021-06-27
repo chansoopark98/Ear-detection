@@ -92,18 +92,18 @@ class DataGenerator(Sequence):
             image = self.x_list[j]
             point = self.y_list[j]
 
-            if tf.random.uniform([]) > 0.2:
+            if tf.random.uniform([]) > 0.5:
                 image = tf.image.random_saturation(image, lower=0.5, upper=1.5)  # 랜덤 채도
-            if tf.random.uniform([]) > 0.2:
+            if tf.random.uniform([]) > 0.5:
                 image = tf.image.random_brightness(image, max_delta=0.15)  # 랜덤 밝기
-            if tf.random.uniform([]) > 0.2:
+            if tf.random.uniform([]) > 0.5:
                 image = tf.image.random_contrast(image, lower=0.5, upper=1.5)  # 랜덤 대비
-            if tf.random.uniform([]) > 0.2:
+            if tf.random.uniform([]) > 0.5:
                 image = tf.image.random_hue(image, max_delta=0.2)  # 랜덤 휴 트랜스폼
-            # if tf.random.uniform([]) > 0.2: # flip
-            #     image = tf.image.flip_left_right(image)
-            #     point = tf.stack([1 - point[0], 1 - point[1],
-            #                       1 - point[2], 1 - point[3],], axis=0)
+            if tf.random.uniform([]) > 0.5: # flip
+                image = tf.image.flip_left_right(image)
+                point = tf.stack([1 - point[0], 1 - point[1],
+                                  1 - point[2], 1 - point[3],], axis=0)
 
             data.append(image)
             y_data.append(point)
