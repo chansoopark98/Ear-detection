@@ -3,10 +3,10 @@ import time
 
 
 hyper_params = {
-                "epoch": 1,
+                "epoch": 200,
                 "lr": 0.001,
                 "end_lr": 0.0001,
-                "batch_size": 1,
+                "batch_size": 64,
                 "image_size": 224
                 }
 
@@ -36,13 +36,9 @@ class GetConfig:
         # train params
         self.args = hyper_params
 
-
-
     def create_directory(self):
         os.makedirs(self.data_dir, exist_ok=True)
         os.makedirs(self.result_dir, exist_ok=True)
-        os.makedirs(self.result_dir + self.time, exist_ok=True)
-
 
     def get_current_time(self):
         return str(time.strftime('%m%d', time.localtime(time.time())))

@@ -1,10 +1,2 @@
-tensorflow==2.2.0
-pycocotools
-keras
-matplotlib
-tensorflow_datasets
-efficientnet
-opencv-python
+tensorflow==2.4.1
 tqdm
-cython
-tensorflow-addons

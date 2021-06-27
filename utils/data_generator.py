@@ -4,8 +4,6 @@ from tensorflow.keras.preprocessing import image
 import tensorflow as tf
 
 import os
-import pandas as pd
-import random
 import numpy as np
 
 class DataGenerator(Sequence):
@@ -61,28 +59,11 @@ class DataGenerator(Sequence):
 
                 self.y_list.append(point)
 
-
-
     def get_data_len(self):
         return len(self.x_list), len(self.y_list)
 
     def __len__(self):
         return int(np.floor(len(self.x_list) / self.batch_size))
-
-    # def __getitem__(self, index):
-    #     indexes = self.indexes[index * self.batch_size:(index + 1) * self.batch_size]
-    #
-    #     # x = [self.x_list[k] for k in indexes]
-    #     # y = [self.y_list[k] for k in indexes]
-    #
-    #     batch_x = self.get_input(index)
-    #     batch_y = self.get_target(index)
-    #
-    #
-    #
-    #     # return tuple(x), tuple(y)
-    #     return ([batch_x, batch_y])
-
 
     def on_epoch_end(self):
         self.indexes = np.arange(len(self.x_list))
@@ -103,14 +84,26 @@ class DataGenerator(Sequence):
         data = []
         y_data = []
         for j in range(start, stop):
-            data.append(self.x_list[j])
-            y_data.append(self.y_list[j])
+            image = self.x_list[j]
+            point = self.y_list[j]
 
-        # transpose list of lists
-        # batch = [np.stack(samples, axis=0) for samples in zip(*data)]
-        # y_batch = [np.stack(samples, axis=0) for samples in zip(*y_data)]
+            if tf.random.uniform([]) > 0.5:
+                image = tf.image.random_saturation(image, lower=0.5, upper=1.5)  # 랜덤 채도
+            if tf.random.uniform([]) > 0.5:
+                image = tf.image.random_brightness(image, max_delta=0.15)  # 랜덤 밝기
+            if tf.random.uniform([]) > 0.5:
+                image = tf.image.random_contrast(image, lower=0.5, upper=1.5)  # 랜덤 대비
+            if tf.random.uniform([]) > 0.5:
+                image = tf.image.random_hue(image, max_delta=0.2)  # 랜덤 휴 트랜스폼
+            if tf.random.uniform([]) > 0.5: # flip
+                image = tf.image.flip_left_right(image)
+                point = tf.stack([1 - point[0], 1 - point[1],
+                                  1 - point[2], 1 - point[3],], axis=0)
+
+            data.append(image)
+            y_data.append(point)
+
         data = np.array(data)
         y_data = np.array(y_data)
-        # newer version of tf/keras want batch to be in tuple rather than list
-        # return tuple(batch), tuple(y_batch)
+
         return data, y_data

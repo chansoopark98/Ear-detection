@@ -1,7 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras.callbacks import ReduceLROnPlateau, ModelCheckpoint
 from tensorflow.keras.mixed_precision import experimental as mixed_precision
-from callbacks import Scalar_LR
 from metrics import CreateMetrics
 from config import *
 from utils.data_generator import DataGenerator
@@ -35,11 +34,11 @@ print("학습 배치 개수:", train_steps_per_epoch)
 print("검증 배치 개수:", valid_steps_per_epoch)
 
 metrics = CreateMetrics(train_generator.num_classes)
-reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.9, patience=3, min_lr=1e-5, verbose=1)
+
 
 checkpoint = ModelCheckpoint(CHECKPOINT_DIR + 'ear' + '_' + 'weight_file' + '.h5',
                                  monitor='val_loss', save_best_only=True, save_weights_only=True, verbose=1)
-testCallBack = Scalar_LR('test', TENSORBOARD_DIR)
+
 tensorboard = tf.keras.callbacks.TensorBoard(log_dir=TENSORBOARD_DIR, write_graph=True, write_images=True)
 
 
@@ -51,7 +50,7 @@ lr_scheduler = tf.keras.callbacks.LearningRateScheduler(polyDecay)
 optimizer = tf.keras.optimizers.SGD(learning_rate=params['lr'], momentum=0.9)
 optimizer = mixed_precision.LossScaleOptimizer(optimizer, loss_scale='dynamic')  # tf2.4.1 이전
 
-callback = [checkpoint, reduce_lr , lr_scheduler, testCallBack, tensorboard]
+callback = [checkpoint, lr_scheduler, tensorboard]
 
 
 mirrored_strategy = tf.distribute.MirroredStrategy(cross_device_ops=tf.distribute.HierarchicalCopyAllReduce())
