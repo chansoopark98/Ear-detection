@@ -56,7 +56,8 @@ callback = [checkpoint, lr_scheduler, tensorboard]
 mirrored_strategy = tf.distribute.MirroredStrategy(cross_device_ops=tf.distribute.HierarchicalCopyAllReduce())
 print("Number of devices: {}".format(mirrored_strategy.num_replicas_in_sync))
 
-with mirrored_strategy.scope(): # if use single gpu > with tf.device('/device:GPU:0'):
+# with mirrored_strategy.scope(): # if use single gpu > with tf.device('/device:GPU:0'):
+with tf.device('/device:GPU:0'):
     model = model_build(image_size=params['image_size'])
 
     model.compile(

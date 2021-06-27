@@ -19,7 +19,7 @@ class DataGenerator(Sequence):
         self.mode = mode
 
         # train
-        self.dataList = os.listdir(self.path_args[self.mode]+'/images/')
+        self.dataList = os.listdir(self.path_args[self.mode]+'/o_images/')
 
         # TODO validation and test dataset
         # -->
@@ -38,14 +38,17 @@ class DataGenerator(Sequence):
         for i, j in enumerate(self.dataList):
             # train data
             load_path = self.path_args[self.mode]
-            img = image.load_img(load_path + 'images/' + self.mode + '_' + str(i) + '.png')
+            img = image.load_img(load_path + 'o_images/' + self.mode + '_' + str(i) + '.png')
             x = image.img_to_array(img)
-            x = preprocess_input(x)
+            height = x.shape[0]
+            width = x.shape[1]
             x = tf.image.resize(x, [self.img_size, self.img_size])
+            x = preprocess_input(x)
+
 
             self.x_list.append(x)
 
-            txt_path = load_path + 'landmarks/' + self.mode + '_' + str(i) + '.txt'
+            txt_path = load_path + 'o_landmarks/' + self.mode + '_' + str(i) + '.txt'
             with open(txt_path, 'r') as f:
                 lines_list = f.readlines()
 
@@ -54,7 +57,9 @@ class DataGenerator(Sequence):
 
                 str1, str2 = lines_20.split(' ')
                 str3, str4 = lines_44.split(' ')
-                point = tf.stack([float(str1), float(str2), float(str3), float(str4)], axis=0)
+                point = tf.stack([float(str1)/width, float(str2)/height, float(str3)/width, float(str4)/height], axis=0)
+
+
                 point = tf.cast(point, dtype=tf.float32)
 
                 self.y_list.append(point)
