@@ -9,20 +9,18 @@ import numpy as np
 
 def draw_bounding(img , bboxes, img_size):
     # resizing 작업
+    img_box = np.copy(img)
+    for i in range(0, 54, 2):
 
-        x1 = int(bboxes[0] * img_size[1])
-        x2 = int(bboxes[1] * img_size[0])
-        y1 = int(bboxes[2] * img_size[1])
-        y2 = int(bboxes[3] * img_size[0])
+        x1 = int(bboxes[i] * img_size[1])
+        x2 = int(bboxes[i+1] * img_size[0])
 
-        img_box = np.copy(img)
+        cv2.circle(img_box, (x1, x2), 5, (255, 0, 0), cv2.FILLED, cv2.LINE_4)
 
-        cv2.circle(img_box, (x1, x2), 15, (255, 0, 0), cv2.FILLED, cv2.LINE_4)
-        cv2.circle(img_box, (y1, y2), 15, (0, 255, 0), cv2.FILLED, cv2.LINE_4)
-        alpha = 0.8
-        cv2.addWeighted(img_box, alpha, img, 1. - alpha, 0, img)
-        cv2.imshow('test', img_box)
-        cv2.waitKey()
+    alpha = 0.8
+    cv2.addWeighted(img_box, alpha, img, 1. - alpha, 0, img)
+    cv2.imshow('test', img_box)
+    cv2.waitKey()
 
 class DataGenerator(Sequence):
     def __init__(self,
@@ -67,22 +65,21 @@ class DataGenerator(Sequence):
             # x1, x2, y1, y2
             with open(txt_path, 'r') as f:
                 lines_list = f.readlines()
+                point = []
+                for index in range(3, 58):
+                    tmp = lines_list[index]
+                    str1, str2 = tmp.split(' ')
+                    str1 = float(str1) / width
+                    str2 = float(str2) / height
+                    point.append(str1)
+                    point.append(str2)
 
-                lines_20 = lines_list[20]
-                lines_44 = lines_list[44]
 
-                str1, str2 = lines_20.split(' ')
-                str3, str4 = lines_44.split(' ')
-                str1 = float(str1)
-                str2 = float(str2)
-                str3 = float(str3)
-                str4 = float(str4)
-
-                point = tf.stack([str1/width, str2/height, str3/width, str4/height], axis=0)
+                point = tf.stack(point, axis=0)
 
                 # point = tf.cast(point, dtype=tf.float32)
 
-                # draw_bounding(x, point, [224, 224])
+                draw_bounding(x, point, [height, width])
 
                 self.y_list.append(point)
 

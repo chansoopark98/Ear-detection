@@ -21,7 +21,7 @@ config = GetConfig()
 
 CHECKPOINT_DIR = config.save_weight
 TENSORBOARD_DIR = config.tensorboard_dir
-WEIGHT_PATH = './save_weights/ear_weight_file.h5'
+WEIGHT_PATH = './checkpoints/0628/save_weights/ear_weight_file.h5'
 
 params = config.get_hyperParams()
 
@@ -38,19 +38,16 @@ def decode_img(img, image_size):
     return tf.image.resize(img, image_size)
 
 def draw_bounding(img , bboxes, img_size):
-    # resizing 작업
+    img_box = np.copy(img)
+    for i in range(0, 54, 2):
 
-        x1 = int(bboxes[0] * img_size[1])
-        x2 = int(bboxes[1] * img_size[0])
-        y1 = int(bboxes[2] * img_size[1])
-        y2 = int(bboxes[3] * img_size[0])
+        x1 = int(bboxes[i] * img_size[1])
+        x2 = int(bboxes[i+1] * img_size[0])
 
-        img_box = np.copy(img)
+        cv2.circle(img_box, (x1, x2), 5, (255, 0, 0), cv2.FILLED, cv2.LINE_4)
 
-        cv2.circle(img_box, (x1, x2), 25, (255, 0, 0), cv2.FILLED, cv2.LINE_4)
-        cv2.circle(img_box, (y1, y2), 25, (0, 255, 0), cv2.FILLED, cv2.LINE_4)
-        alpha = 0.8
-        cv2.addWeighted(img_box, alpha, img, 1. - alpha, 0, img)
+    alpha = 0.8
+    cv2.addWeighted(img_box, alpha, img, 1. - alpha, 0, img)
 
 
 
