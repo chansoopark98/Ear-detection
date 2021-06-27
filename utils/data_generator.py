@@ -2,7 +2,7 @@ from tensorflow.keras.utils import Sequence
 from tensorflow.keras.applications.imagenet_utils import preprocess_input
 from tensorflow.keras.preprocessing import image
 import tensorflow as tf
-
+import cv2
 import os
 import numpy as np
 
@@ -36,19 +36,17 @@ class DataGenerator(Sequence):
 
     def load_dataset(self):
         for i, j in enumerate(self.dataList):
-            # train data
             load_path = self.path_args[self.mode]
-            img = image.load_img(load_path + 'o_images/' + self.mode + '_' + str(i) + '.png')
-            x = image.img_to_array(img)
+            # img = image.load_img(load_path + 'o_images/' + self.mode + '_' + str(i) + '.png')
+            # x = image.img_to_array(img)
+            txt_path = load_path + 'o_landmarks/' + self.mode + '_' + str(i) + '.txt'
+            x = cv2.imread(load_path + 'o_images/' + self.mode + '_' + str(i) + '.png')
+            # image data
+
             height = x.shape[0]
             width = x.shape[1]
-            x = preprocess_input(x)
-            x = tf.image.resize(x, [self.img_size, self.img_size])
 
-
-            self.x_list.append(x)
-
-            txt_path = load_path + 'o_landmarks/' + self.mode + '_' + str(i) + '.txt'
+            # x1, x2, y1, y2
             with open(txt_path, 'r') as f:
                 lines_list = f.readlines()
 
@@ -57,12 +55,51 @@ class DataGenerator(Sequence):
 
                 str1, str2 = lines_20.split(' ')
                 str3, str4 = lines_44.split(' ')
+                str1 = float(str1)
+                str2 = float(str2)
+                str3 = float(str3)
+                str4 = float(str4)
+
+                if str1 < str3: # 첫번째 x가 더 클경우 x축 좌측
+                    tmp_l_x = str1 / 2
+                    tmp_r_x = str3 + ((width - str3) / 2)
+                if str3 < str1:
+                    tmp_l_x = str3 / 2
+                    tmp_r_x = str1 + ((width - str1) / 2)
+
+                if str2 < str4: # 첫번째 x가 더 클경우 x축 좌측
+                    tmp_l_y = str2 / 2
+                    tmp_r_y = str4 + ((height - str4) / 2)
+                if str3 < str1:
+                    tmp_l_y = str4 / 2
+                    tmp_r_y = str2 + ((width - str2) / 2)
+
+
+                # crop_img = x[tmp_l_x:tmp_r_x, tmp_l_y:tmp_r_y]
+                crop_img = x[tmp_l_y:tmp_r_y, tmp_l_x:tmp_r_x]
+
+
+
+
+
+
+
+
                 point = tf.stack([float(str1)/width, float(str2)/height, float(str3)/width, float(str4)/height], axis=0)
 
 
                 point = tf.cast(point, dtype=tf.float32)
 
                 self.y_list.append(point)
+
+            # appending image data (preprocess)
+            x = preprocess_input(x)
+            x = tf.image.resize(x, [self.img_size, self.img_size])
+
+
+            self.x_list.append(x)
+
+
 
     def get_data_len(self):
         return len(self.x_list), len(self.y_list)
